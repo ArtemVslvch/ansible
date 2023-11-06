@@ -1,0 +1,53 @@
+---
+- name: Install LEMP
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Install Nginx
+      yum:
+        name: nginx
+        state: present
+      notify:
+        - restart Nginx
+
+###################################Install Mariadb
+    - name: Install mariadb
+      yum:
+        name: mariadb-server
+        state: present
+
+    - name: start mariadb
+      service:
+        name: mariadb
+        state: started
+
+###################################Install php-fpm
+    - name: Install php-fpm
+      yum:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - php-fpm
+        - php-mysqlnd
+        - php-mbstring
+        - php-cli
+
+    - name: configure php-fpm
+      copy:
+        src: /etc/ansible/files/php-fpm/www.conf
+        dest: /etc/php-fpm.d/www.conf
+      notify:
+        - restart php-fpm
+
+
+
+  handlers:
+    - name: restart Nginx
+      service:
+        name: nginx
+        state: restarted
+    
+    - name: restart php-fpm
+      service:
+        name: php-fpm
+        state: restarted
